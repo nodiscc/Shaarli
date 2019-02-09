@@ -257,21 +257,23 @@ To learn how to use Shaarli, consult the link "Documentation" at the bottom of t
 
 You use the community supported version of the original Shaarli project, by Sebastien Sauvage.'
             ),
-            'private'=>0,
-            'created'=> new DateTime(),
-            'tags'=>'opensource software'
+            'private' => 0,
+            'created' => new DateTime(),
+            'tags' => 'opensource software',
+            'sticky' => false,
         );
         $link['shorturl'] = link_small_hash($link['created'], $link['id']);
         $this->links[1] = $link;
 
         $link = array(
             'id' => 0,
-            'title'=> t('My secret stuff... - Pastebin.com'),
-            'url'=>'http://sebsauvage.net/paste/?8434b27936c09649#bR7XsXhoTiLcqCpQbmOpBi3rq2zzQUC5hBI7ZT1O3x8=',
-            'description'=> t('Shhhh! I\'m a private link only YOU can see. You can delete me too.'),
-            'private'=>1,
-            'created'=> new DateTime('1 minute ago'),
-            'tags'=>'secretstuff',
+            'title' => t('My secret stuff... - Pastebin.com'),
+            'url' => 'http://sebsauvage.net/paste/?8434b27936c09649#bR7XsXhoTiLcqCpQbmOpBi3rq2zzQUC5hBI7ZT1O3x8=',
+            'description' => t('Shhhh! I\'m a private link only YOU can see. You can delete me too.'),
+            'private' => 1,
+            'created' => new DateTime('1 minute ago'),
+            'tags' => 'secretstuff',
+            'sticky' => false,
         );
         $link['shorturl'] = link_small_hash($link['created'], $link['id']);
         $this->links[0] = $link;
@@ -322,6 +324,8 @@ You use the community supported version of the original Shaarli project, by Seba
             } else {
                 $link['real_url'] = $link['url'];
             }
+
+            $link['sticky'] = isset($link['sticky']) ? $link['sticky'] : false;
 
             // To be able to load links before running the update, and prepare the update
             if (! isset($link['created'])) {
