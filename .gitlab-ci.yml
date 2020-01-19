@@ -1,0 +1,6 @@
+---
+
+build:
+  script:
+    - make release_archive
+
