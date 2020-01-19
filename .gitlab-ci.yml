@@ -1,6 +1,8 @@
 ---
 
 build:
+  before_script:
+    - sudo apt install composer
   script:
     - make release_archive
 
