@@ -123,7 +123,7 @@ if ($conf->get('dev.debug', false)) {
     });
 }
 
-$sessionManager = new SessionManager($_SESSION, $conf);
+$sessionManager = new SessionManager($_SESSION, $conf, session_save_path());
 $loginManager = new LoginManager($conf, $sessionManager);
 $loginManager->generateStaySignedInToken($_SERVER['REMOTE_ADDR']);
 $clientIpId = client_ip_id($_SERVER);
@@ -408,6 +408,8 @@ $app->group('/api/v1', function () {
 })->add('\Shaarli\Api\ApiMiddleware');
 
 $app->group('', function () {
+    $this->get('/install', '\Shaarli\Front\Controller\Visitor\InstallController:index')->setName('install');
+
     /* -- PUBLIC --*/
     $this->get('/', '\Shaarli\Front\Controller\Visitor\BookmarkListController:index');
     $this->get('/shaare/{hash}', '\Shaarli\Front\Controller\Visitor\BookmarkListController:permalink');
