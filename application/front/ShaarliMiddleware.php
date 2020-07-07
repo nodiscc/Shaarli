@@ -43,7 +43,9 @@ class ShaarliMiddleware
         $this->container->basePath = rtrim($request->getUri()->getBasePath(), '/');
 
         try {
-            if (!is_file($this->container->conf->getConfigFileExt()) && 'install' !== $next->getName()) {
+            if (!is_file($this->container->conf->getConfigFileExt())
+                && !in_array($next->getName(), ['displayInstall', 'saveInstall'], true)
+            ) {
                 return $response->withRedirect($this->container->basePath . '/install');
             }
 

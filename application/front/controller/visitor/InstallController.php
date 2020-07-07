@@ -62,62 +62,6 @@ class InstallController extends ShaarliVisitorController
             return $this->redirect($response, '/install');
         }
 
-        if (!empty($request->getParam('setlogin')) && !empty($request->getParam('setpassword'))) {
-            $timezone = 'UTC';
-            if (!empty($request->getParam('continent'))
-                && !empty($request->getParam('city'))
-                && isTimeZoneValid($request->getParam('continent'), $request->getParam('city'))
-            ) {
-                $timezone = $request->getParam('continent') . '/' . $request->getParam('city');
-            }
-            $this->container->conf->set('general.timezone', $timezone);
-            $login = $request->getParam('setlogin');
-            $this->container->conf->set('credentials.login', $login);
-            $salt = sha1(uniqid('', true) .'_'. mt_rand());
-            $this->container->conf->set('credentials.salt', $salt);
-            $this->container->conf->set('credentials.hash', sha1($request->getParam('setpassword') . $login . $salt));
-            if (!empty($request->getParam('title'))) {
-                $this->container->conf->set('general.title', escape($request->getParam('title')));
-            } else {
-                $this->container->conf->set('general.title', 'Shared bookmarks on '.escape(index_url($_SERVER)));
-            }
-            $this->container->conf->set('translation.language', escape($request->getParam('language')));
-            $this->container->conf->set('updates.check_updates', !empty($request->getParam('updateCheck')));
-            $this->container->conf->set('api.enabled', !empty($request->getParam('enableApi')));
-            $this->container->conf->set(
-                'api.secret',
-                generate_api_secret(
-                    $this->container->conf->get('credentials.login'),
-                    $this->container->conf->get('credentials.salt')
-                )
-            );
-            try {
-                // Everything is ok, let's create config file.
-                $this->container->conf->write($this->container->loginManager->isLoggedIn());
-            } catch (\Exception $e) {
-                error_log(
-                    'ERROR while writing config file after installation.' . PHP_EOL .
-                    $e->getMessage()
-                );
-
-                $this->assignView('message', $e->getMessage());
-
-                return $response->write($this->render('error'));
-            }
-
-            if ($this->container->bookmarkService->count() === 0) {
-                $this->container->bookmarkService->initialize();
-            }
-
-            return $this->redirect($response, '/');
-
-            echo '<script>alert('
-                .'"Shaarli is now configured. '
-                .'Please enter your login/password and start shaaring your bookmarks!"'
-                .');document.location=\'./login\';</script>';
-            exit;
-        }
-
         [$continents, $cities] = generateTimeZoneData(timezone_identifiers_list(), date_default_timezone_get());
 
         $this->assignView('continents', $continents);
@@ -125,6 +69,63 @@ class InstallController extends ShaarliVisitorController
         $this->assignView('languages', Languages::getAvailableLanguages());
 
         return $response->write($this->render('install'));
+    }
+
+    public function install(Request $request, Response $response): Response
+    {
+        $timezone = 'UTC';
+        if (!empty($request->getParam('continent'))
+            && !empty($request->getParam('city'))
+            && isTimeZoneValid($request->getParam('continent'), $request->getParam('city'))
+        ) {
+            $timezone = $request->getParam('continent') . '/' . $request->getParam('city');
+        }
+        $this->container->conf->set('general.timezone', $timezone);
+        $login = $request->getParam('setlogin');
+        $this->container->conf->set('credentials.login', $login);
+        $salt = sha1(uniqid('', true) .'_'. mt_rand());
+        $this->container->conf->set('credentials.salt', $salt);
+        $this->container->conf->set('credentials.hash', sha1($request->getParam('setpassword') . $login . $salt));
+        if (!empty($request->getParam('title'))) {
+            $this->container->conf->set('general.title', escape($request->getParam('title')));
+        } else {
+            $this->container->conf->set('general.title', 'Shared bookmarks on '.escape(index_url($_SERVER)));
+        }
+        $this->container->conf->set('translation.language', escape($request->getParam('language')));
+        $this->container->conf->set('updates.check_updates', !empty($request->getParam('updateCheck')));
+        $this->container->conf->set('api.enabled', !empty($request->getParam('enableApi')));
+        $this->container->conf->set(
+            'api.secret',
+            generate_api_secret(
+                $this->container->conf->get('credentials.login'),
+                $this->container->conf->get('credentials.salt')
+            )
+        );
+        try {
+            // Everything is ok, let's create config file.
+            $this->container->conf->write($this->container->loginManager->isLoggedIn());
+        } catch (\Exception $e) {
+            error_log(
+                'ERROR while writing config file after installation.' . PHP_EOL .
+                $e->getMessage()
+            );
+
+            $this->assignView('message', $e->getMessage());
+
+            return $response->write($this->render('error'));
+        }
+
+        if ($this->container->bookmarkService->count() === 0) {
+            $this->container->bookmarkService->initialize();
+        }
+
+        return $this->redirect($response, '/');
+
+        echo '<script>alert('
+            .'"Shaarli is now configured. '
+            .'Please enter your login/password and start shaaring your bookmarks!"'
+            .');document.location=\'./login\';</script>';
+        exit;
     }
 
     protected function checkPermissions(): bool

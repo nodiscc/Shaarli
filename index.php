@@ -158,26 +158,26 @@ header("Cache-Control: no-store, no-cache, must-revalidate");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-if (! is_file($conf->getConfigFileExt())) {
-    // Ensure Shaarli has proper access to its resources
-    $errors = ApplicationUtils::checkResourcePermissions($conf);
-
-    if ($errors != array()) {
-        $message = '<p>'. t('Insufficient permissions:') .'</p><ul>';
-
-        foreach ($errors as $error) {
-            $message .= '<li>'.$error.'</li>';
-        }
-        $message .= '</ul>';
-
-        header('Content-Type: text/html; charset=utf-8');
-        echo $message;
-        exit;
-    }
-
-    // Display the installation form if no existing config is found
-    install($conf, $sessionManager, $loginManager);
-}
+//if (! is_file($conf->getConfigFileExt())) {
+//    // Ensure Shaarli has proper access to its resources
+//    $errors = ApplicationUtils::checkResourcePermissions($conf);
+//
+//    if ($errors != array()) {
+//        $message = '<p>'. t('Insufficient permissions:') .'</p><ul>';
+//
+//        foreach ($errors as $error) {
+//            $message .= '<li>'.$error.'</li>';
+//        }
+//        $message .= '</ul>';
+//
+//        header('Content-Type: text/html; charset=utf-8');
+//        echo $message;
+//        exit;
+//    }
+//
+//    // Display the installation form if no existing config is found
+//    install($conf, $sessionManager, $loginManager);
+//}
 
 $loginManager->checkLoginState($_COOKIE, $clientIpId);
 
@@ -311,10 +311,12 @@ function install($conf, $sessionManager, $loginManager)
         // Step 1 : Try to store data in session and reload page.
         $_SESSION['session_tested'] = 'Working';  // Try to set a variable in session.
         header('Location: '.index_url($_SERVER).'?test_session');  // Redirect to check stored data.
+        exit;
     }
     if (isset($_GET['test_session'])) {
         // Step 3: Sessions are OK. Remove test parameter from URL.
         header('Location: '.index_url($_SERVER));
+        exit;
     }
 
 
@@ -408,7 +410,8 @@ $app->group('/api/v1', function () {
 })->add('\Shaarli\Api\ApiMiddleware');
 
 $app->group('', function () {
-    $this->get('/install', '\Shaarli\Front\Controller\Visitor\InstallController:index')->setName('install');
+    $this->get('/install', '\Shaarli\Front\Controller\Visitor\InstallController:index')->setName('displayInstall');
+    $this->post('/install', '\Shaarli\Front\Controller\Visitor\InstallController:install')->setName('saveInstall');
 
     /* -- PUBLIC --*/
     $this->get('/', '\Shaarli\Front\Controller\Visitor\BookmarkListController:index');
