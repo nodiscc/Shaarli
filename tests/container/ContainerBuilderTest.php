@@ -14,6 +14,7 @@ use Shaarli\Http\HttpAccess;
 use Shaarli\Plugin\PluginManager;
 use Shaarli\Render\PageBuilder;
 use Shaarli\Render\PageCacheManager;
+use Shaarli\Security\CookieManager;
 use Shaarli\Security\LoginManager;
 use Shaarli\Security\SessionManager;
 use Shaarli\Thumbnailer;
@@ -32,10 +33,14 @@ class ContainerBuilderTest extends TestCase
     /** @var ContainerBuilder */
     protected $containerBuilder;
 
+    /** @var CookieManager */
+    protected $cookieManager;
+
     public function setUp(): void
     {
         $this->conf = new ConfigManager('tests/utils/config/configJson');
         $this->sessionManager = $this->createMock(SessionManager::class);
+        $this->cookieManager = $this->createMock(CookieManager::class);
 
         $this->loginManager = $this->createMock(LoginManager::class);
         $this->loginManager->method('isLoggedIn')->willReturn(true);
@@ -43,6 +48,7 @@ class ContainerBuilderTest extends TestCase
         $this->containerBuilder = new ContainerBuilder(
             $this->conf,
             $this->sessionManager,
+            $this->cookieManager,
             $this->loginManager
         );
     }
@@ -53,6 +59,7 @@ class ContainerBuilderTest extends TestCase
 
         static::assertInstanceOf(ConfigManager::class, $container->conf);
         static::assertInstanceOf(SessionManager::class, $container->sessionManager);
+        static::assertInstanceOf(CookieManager::class, $container->cookieManager);
         static::assertInstanceOf(LoginManager::class, $container->loginManager);
         static::assertInstanceOf(History::class, $container->history);
         static::assertInstanceOf(BookmarkServiceInterface::class, $container->bookmarkService);
