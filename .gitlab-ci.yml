@@ -1,5 +1,7 @@
 variables:
   DOCKER_DRIVER: overlay2
+  CLAIR_TRACE: "true"
+  KLAR_TRACE: "true"
 
 stages:
   - build
