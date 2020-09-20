@@ -1,0 +1,21 @@
+variables:
+  DOCKER_DRIVER: overlay2
+
+stages:
+  - build
+  - test
+
+build:
+  image: docker:stable
+  stage: build
+  services:
+    - docker:stable-dind
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+
+include:
+  - template: Container-Scanning.gitlab-ci.yml
