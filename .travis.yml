@@ -44,6 +44,10 @@ matrix:
         - pip install mkdocs
       script:
         - mkdocs build --clean
+    - language: php
+      php: 7.4
+      script:
+        - make release_archive
 
 cache:
   directories:
