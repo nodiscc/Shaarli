@@ -61,7 +61,7 @@ check_permissions:
 # See phpunit.xml for configuration
 # https://phpunit.de/manual/current/en/appendixes.configuration.html
 ##
-test: translate
+test: translate composer_dependencies_dev
 	@echo "-------"
 	@echo "PHPUNIT"
 	@echo "-------"
