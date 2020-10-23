@@ -47,7 +47,7 @@ matrix:
     - language: php
       php: 7.4
       script:
-        - sudo apt update && sudo apt instll python3-venv
+        - sudo apt update && sudo apt install python3-venv
         - make release_archive
 
 cache:
