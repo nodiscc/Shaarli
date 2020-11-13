@@ -39,11 +39,11 @@ docker run hello-world
 
 ## Get and run a Shaarli image
 
-Shaarli images are available on [DockerHub](https://hub.docker.com/r/shaarli/shaarli/) `shaarli/shaarli`:
+Shaarli images are available on [DockerHub](https://hub.docker.com/r/shaarli/shaarli/):
 
-- `latest`: latest branch (last release)
-- `stable`: stable branch (last release in previous major version)
-- `master`: master branch (development branch)
+- `shaarli/shaarli:vX.Y.Z`: where X.Y.Z is any [tagged release](https://github.com/shaarli/Shaarli/releases)
+- `shaarli/shaarli:latest`: latest branch (last release)
+- `shaarli/shaarli:release`: master branch (development branch)
 
 These images are built automatically on DockerHub and rely on:
 
