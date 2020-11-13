@@ -177,7 +177,7 @@ eslint:
 sasslint:
 	@yarn run stylelint --config .dev/.stylelintrc.js 'assets/default/scss/*.scss'
 
-### Install build dependencies from package manager (Debian 10)
+### Install build dependencines from package manager (Debian 10)
 dependencies_dev:
 	sudo apt install composer php-json php-mbstring php-gd php-intl php-curl php-gettext yarnpkg phpunit python3-venv
 	sudo ln -f -s /usr/bin/yarnpkg /usr/local/bin/yarn
