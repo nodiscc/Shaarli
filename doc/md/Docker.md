@@ -91,13 +91,15 @@ docker ps -a | grep myshaarli # verify th container has been destroyed
 
 After running `docker run` command, your Shaarli instance should be available on the host machine at [localhost:8000](http://localhost:8000). In order to access your instance through a reverse proxy, we recommend using our [Docker Compose](#docker-compose) build.
 
+
 ## Docker Compose
 
-A [Compose file](https://docs.docker.com/compose/compose-file/) is a common format for defining and running multi-container Docker applications.
+A [Compose file](https://docs.docker.com/compose/compose-file/) is a common format for defining and running multi-container Docker applications. It can be used from [Docker Compose](https://docs.docker.com/compose/) or in a [Docker stack](https://docs.docker.com/engine/reference/commandline/stack_deploy/)
 
-A `docker-compose.yml` file can be used to run a persistent/autostarted shaarli service using [Docker Compose](https://docs.docker.com/compose/) or in a [Docker stack](https://docs.docker.com/engine/reference/commandline/stack_deploy/).
-
-Shaarli provides configuration file for Docker Compose, that will setup a Shaarli instance, a [Træfik](https://containo.us/traefik/) instance (reverse proxy) with [Let's Encrypt](https://letsencrypt.org/) certificates, a Docker network, and volumes for Shaarli data and Træfik TLS configuration and certificates.
+Shaarli's [`docker-compose.yml`](https://raw.githubusercontent.com/shaarli/Shaarli/latest/docker-compose.yml) will setup:
+- a persistent, autostarted Shaarli instance
+- a [Træfik](https://containo.us/traefik/) instance (reverse proxy) with [Let's Encrypt](https://letsencrypt.org/) certificates
+- Docker networks and persistent volumes for data/configuration/certificates.
 
 Download docker-compose from the [release page](https://docs.docker.com/compose/install/):
 
@@ -106,13 +108,15 @@ $ sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docke
 $ sudo chmod +x /usr/local/bin/docker-compose
 ```
 
-To run Shaarli container and its reverse proxy, you can execute the following commands:
+To run a Shaarli container and its reverse proxy, run the following commands:
 
 ```bash
 # create a new directory to store the configuration:
 $ mkdir shaarli && cd shaarli
 # Download the latest version of Shaarli's docker-compose.yml
 $ curl -L https://raw.githubusercontent.com/shaarli/Shaarli/latest/docker-compose.yml -o docker-compose.yml
+# The default Compose file runs the 'latest' Shaarli image (built from master/development version)
+# Change the image tag in the compose file to 'release' or a specific version for more stability
 # Create the .env file and fill in your VPS and domain information
 # (replace <shaarli.mydomain.org>, <admin@mydomain.org> and <latest> with your actual information)
 $ echo 'SHAARLI_VIRTUAL_HOST=shaarli.mydomain.org' > .env
