@@ -5,9 +5,20 @@ on: push
 jobs:
   build-test:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        php-versions:
+          - 7.1
+          - 7.2
+          - 7.3
+          - 7.4
     steps:
     - uses: actions/checkout@v2
+    - uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-versions }}
+        extensions: intl #optional
+        ini-values: "post_max_size=256M" #optional
     - uses: php-actions/composer@v1 # or alternative dependency management
     - uses: php-actions/phpunit@v1
 
