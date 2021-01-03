@@ -1,0 +1,13 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+- name: build
+  image: "php:7.4"
+  commands:
+    - make clean
+    - make check_permissions
+    - make code_sniffer
+    - make all_tests
+
