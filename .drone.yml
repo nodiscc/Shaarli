@@ -6,6 +6,7 @@ steps:
 - name: build
   image: alpine:3.12
   commands:
+    - apk update && apk add make
     - make clean
     - make check_permissions
     - make code_sniffer
