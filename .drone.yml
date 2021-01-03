@@ -4,12 +4,19 @@ name: default
 
 steps:
 - name: build
-  image: alpine:3.12
+  image: php:${PHP_VERSION}
   commands:
-    - apk update && apk add make git php7 composer
+    - apt update && apt install make git
     - composer update
     - make clean
     - make check_permissions
     - make code_sniffer
     - make all_tests
+
+matrix:
+  PHP_VERSION:
+   - 7.4
+   - 7.3
+   - 7.2
+   - 7.1
 
