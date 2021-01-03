@@ -4,7 +4,7 @@ name: default
 
 steps:
 - name: build
-  image: "php:7.4"
+  image: alpine:3.12
   commands:
     - make clean
     - make check_permissions
