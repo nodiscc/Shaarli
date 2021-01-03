@@ -8,6 +8,7 @@ steps:
   commands:
     - apk update && apk add make git php7
     - phpenv config-rm xdebug.ini || echo 'No xdebug config.'
+    - composer update
     - make clean
     - make check_permissions
     - make code_sniffer
