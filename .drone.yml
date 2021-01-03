@@ -6,8 +6,7 @@ steps:
 - name: build
   image: alpine:3.12
   commands:
-    - apk update && apk add make git php7
-    - phpenv config-rm xdebug.ini || echo 'No xdebug config.'
+    - apk update && apk add make git php7 composer
     - composer update
     - make clean
     - make check_permissions
