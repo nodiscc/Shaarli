@@ -19,7 +19,6 @@ steps:
     - composer config --unset platform && composer config platform.php 7.4
     - composer update
     #- PATH=${PATH//:\.\/node_modules\/\.bin/}
-
     # run tests
     - make clean
     - make check_permissions
@@ -28,6 +27,37 @@ steps:
   volumes:
     - name: cache
       path: $HOME/.composer/cache
+
+---
+kind: pipeline
+type: docker
+name: php-7.3
+
+steps:
+- name: test-php-7.3
+  image: php:7.3
+  commands:
+    - apt update && apt -y install make git curl zlib1g-dev libpng-dev libjpeg-dev libfreetype6-dev libxml2-dev libonig-dev libcurl4-openssl-dev libldap2-dev
+    - curl --silent --show-error https://getcomposer.org/installer --output composer-setup.php
+    - php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+    # install php extensions
+    - docker-php-ext-configure gd --with-freetype --with-jpeg &&
+      docker-php-ext-install gd simplexml json mbstring intl curl gettext ldap
+    # disable xdebug (faster builds/we don't use coverage)
+    - phpenv config-rm xdebug.ini || echo 'No xdebug config.' 
+    # install/update composer and php dependencies
+    - composer config --unset platform && composer config platform.php 7.3
+    - composer update
+    #- PATH=${PATH//:\.\/node_modules\/\.bin/}
+    # run tests
+    - make clean
+    - make check_permissions
+    - make code_sniffer
+    - make all_tests
+  volumes:
+    - name: cache
+      path: $HOME/.composer/cache
+
 
 # TODO cache dependencies between builds, check http://plugins.drone.io/meltwater/drone-cache/
 
