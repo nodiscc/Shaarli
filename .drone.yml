@@ -7,22 +7,24 @@ steps:
 - name: test-php-7.4
   image: php:7.4
   commands:
-    - apt update && apt -y install make git curl
+    - apt update && apt -y install make git curl zlib1g-dev
     - curl --silent --show-error https://getcomposer.org/installer --output composer-setup.php
     - php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+    # install php extensions
+    - docker-php-ext-configure gd --with-freetype --with-jpeg &&
+      docker-php-ext-configure simplexml &&
+      docker-php-ext-configure json &&
+      docker-php-ext-configure mbstring &&
+      docker-php-ext-configure intl &&
+      docker-php-ext-configure curl &&
+      docker-php-ext-configure gettext
     # disable xdebug (faster builds/we don't use coverage)
     - phpenv config-rm xdebug.ini || echo 'No xdebug config.' 
     # install/update composer and php dependencies
     - composer config --unset platform && composer config platform.php 7.4
     - composer update
     #- PATH=${PATH//:\.\/node_modules\/\.bin/}
-    - docker-php-ext-configure gd --with-freetype --with-jpeg && \
-      docker-php-ext-configure simplexml && \
-      docker-php-ext-configure json && \
-      docker-php-ext-configure mbstring && \
-      docker-php-ext-configure intl && \
-      docker-php-ext-configure curl && \
-      docker-php-ext-configure gettext
+
     # run tests
     - make clean
     - make check_permissions
