@@ -9,7 +9,7 @@ steps:
   commands:
     - apt update && apt -y install make git curl
     - curl --silent --show-error https://getcomposer.org/installer | php
-    - php composer.phar install
+    - php composer.phar --install-dir=/usr/local/bin --filename=composer
     - composer self-update --2
     - composer update --ignore-platform-req=php
     - composer remove --dev --ignore-platform-req=php phpunit/phpunit
