@@ -1,22 +1,30 @@
 kind: pipeline
 type: docker
-name: default
+name: php-latest
 
 steps:
-- name: build
-  image: php:${PHP_VERSION}
+- name: test-php-latest
+  image: php:latest
   commands:
-    - apt update && apt install make git
+    - apt update && apt -y install make git composer
+    - composer self-update --2
+    - composer update --ignore-platform-req=php
+    - composer remove --dev --ignore-platform-req=php phpunit/phpunit
+    - composer require --dev --ignore-platform-req=php phpunit/php-text-template ^2.0
+    - composer require --dev --ignore-platform-req=php phpunit/phpunit ^9.0
+    # disable xdebug (faster builds/we don't use coverage)
+    - phpenv config-rm xdebug.ini || echo 'No xdebug config.' 
+    # install/update composer and php dependencies
+    - composer config --unset platform && composer config platform.php $TRAVIS_PHP_VERSION
     - composer update
+    - PATH=${PATH//:\.\/node_modules\/\.bin/}
+    # run tests
     - make clean
     - make check_permissions
     - make code_sniffer
     - make all_tests
+  volumes:
+    - name: cache
+      path: $HOME/.composer/cache
 
-matrix:
-  PHP_VERSION:
-   - 7.4
-   - 7.3
-   - 7.2
-   - 7.1
 
