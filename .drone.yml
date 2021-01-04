@@ -15,7 +15,7 @@ steps:
     # install/update composer and php dependencies
     - composer config --unset platform && composer config platform.php 7.4
     - composer update
-    - PATH=${PATH//:\.\/node_modules\/\.bin/}
+    #- PATH=${PATH//:\.\/node_modules\/\.bin/}
     # run tests
     - make clean
     - make check_permissions
