@@ -16,6 +16,13 @@ steps:
     - composer config --unset platform && composer config platform.php 7.4
     - composer update
     #- PATH=${PATH//:\.\/node_modules\/\.bin/}
+    - docker-php-ext-configure gd --with-freetype --with-jpeg && \
+      docker-php-ext-configure simplexml && \
+      docker-php-ext-configure json && \
+      docker-php-ext-configure mbstring && \
+      docker-php-ext-configure intl && \
+      docker-php-ext-configure curl && \
+      docker-php-ext-configure gettext
     # run tests
     - make clean
     - make check_permissions
@@ -24,4 +31,6 @@ steps:
   volumes:
     - name: cache
       path: $HOME/.composer/cache
+
+# TODO cache dependencies between builds, check http://plugins.drone.io/meltwater/drone-cache/
 
