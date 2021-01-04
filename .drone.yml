@@ -9,7 +9,7 @@ steps:
   commands:
     - apt update && apt -y install make git curl
     - curl --silent --show-error https://getcomposer.org/installer | php
-    - php composer.phar
+    - php composer.phar install
     - composer self-update --2
     - composer update --ignore-platform-req=php
     - composer remove --dev --ignore-platform-req=php phpunit/phpunit
@@ -30,31 +30,31 @@ steps:
     - name: cache
       path: $HOME/.composer/cache
 
----
+#---
 
-kind: pipeline
-type: docker
-name: php-7.4
+#kind: pipeline
+#type: docker
+#name: php-7.4
 
-steps:
-- name: test-php-7.4
-  image: php:7.4
-  commands:
-    - apt update && apt -y install make git curl
-    - curl --silent --show-error https://getcomposer.org/installer | php
-    - php composer.phar
-    # disable xdebug (faster builds/we don't use coverage)
-    - phpenv config-rm xdebug.ini || echo 'No xdebug config.' 
-    # install/update composer and php dependencies
-    - composer config --unset platform && composer config platform.php 7.4
-    - composer update
-    - PATH=${PATH//:\.\/node_modules\/\.bin/}
-    # run tests
-    - make clean
-    - make check_permissions
-    - make code_sniffer
-    - make all_tests
-  volumes:
-    - name: cache
-      path: $HOME/.composer/cache
+#steps:
+#- name: test-php-7.4
+#  image: php:7.4
+#  commands:
+#    - apt update && apt -y install make git curl
+#    - curl --silent --show-error https://getcomposer.org/installer | php
+#    - php composer.phar install
+#    # disable xdebug (faster builds/we don't use coverage)
+#    - phpenv config-rm xdebug.ini || echo 'No xdebug config.' 
+#    # install/update composer and php dependencies
+#    - composer config --unset platform && composer config platform.php 7.4
+#    - composer update
+#    - PATH=${PATH//:\.\/node_modules\/\.bin/}
+#    # run tests
+#    - make clean
+#    - make check_permissions
+#    - make code_sniffer
+#    - make all_tests
+#  volumes:
+#    - name: cache
+#      path: $HOME/.composer/cache
 
