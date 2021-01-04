@@ -24,9 +24,6 @@ steps:
     - make check_permissions
     - make code_sniffer
     - make all_tests
-  volumes:
-    - name: cache
-      path: $HOME/.composer/cache
 
 ---
 kind: pipeline
@@ -54,10 +51,6 @@ steps:
     - make check_permissions
     - make code_sniffer
     - make all_tests
-  volumes:
-    - name: cache
-      path: $HOME/.composer/cache
-
 
 # TODO cache dependencies between builds, check http://plugins.drone.io/meltwater/drone-cache/
 
