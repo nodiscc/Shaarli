@@ -18,7 +18,6 @@ steps:
       docker-php-ext-configure intl &&
       docker-php-ext-configure curl &&
       docker-php-ext-configure gettext
-    - exit 1
     # disable xdebug (faster builds/we don't use coverage)
     - phpenv config-rm xdebug.ini || echo 'No xdebug config.' 
     # install/update composer and php dependencies
