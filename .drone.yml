@@ -12,12 +12,7 @@ steps:
     - php composer-setup.php --install-dir=/usr/local/bin --filename=composer
     # install php extensions
     - docker-php-ext-configure gd --with-freetype --with-jpeg &&
-      docker-php-ext-configure simplexml &&
-      docker-php-ext-configure json &&
-      docker-php-ext-configure mbstring &&
-      docker-php-ext-configure intl &&
-      docker-php-ext-configure curl &&
-      docker-php-ext-configure gettext
+      docker-php-ext-install gd simplexml json mbstring intl curl gettext
     # disable xdebug (faster builds/we don't use coverage)
     - phpenv config-rm xdebug.ini || echo 'No xdebug config.' 
     # install/update composer and php dependencies
