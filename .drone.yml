@@ -7,7 +7,7 @@ steps:
 - name: test-php-7.4
   image: php:7.4
   commands:
-    - apt update && apt -y install make git curl zlib1g-dev libpng-dev libjpeg-dev libfreetype6-dev libxml2-dev libonig-dev
+    - apt update && apt -y install make git curl zlib1g-dev libpng-dev libjpeg-dev libfreetype6-dev libxml2-dev libonig-dev libcurl4-openssl-dev
     - curl --silent --show-error https://getcomposer.org/installer --output composer-setup.php
     - php composer-setup.php --install-dir=/usr/local/bin --filename=composer
     # install php extensions
