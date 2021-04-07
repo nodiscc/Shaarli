@@ -8,22 +8,13 @@ clone:
 
 steps:
 - name: test-php-7.4
-  image: nodiscc/drone-ci-base:7.4
+  image: shaarli/drone-ci-base:7.4
   commands:
-    - whoami
-    - id
-    - echo $PWD
-    - ls -ld $PWD
-    - ls -ld /drone
-    - echo $HOME
     - git clone https://github.com/nodiscc/Shaarli.git .
     - git checkout $DRONE_COMMIT
-    - phpenv config-rm xdebug.ini || echo 'No xdebug config.'
-    # install/update composer and php dependencies
     - composer config --unset platform && composer config platform.php 7.4
     - composer update
     # - PATH=${PATH//:\.\/node_modules\/\.bin/}
-    # run tests
     - make clean
     - make check_permissions
     - make code_sniffer
@@ -39,22 +30,13 @@ clone:
 
 steps:
 - name: test-php-7.3
-  image: nodiscc/drone-ci-base:7.3
+  image: shaarli/drone-ci-base:7.3
   commands:
     - git clone https://github.com/nodiscc/Shaarli.git .
     - git checkout $DRONE_COMMIT
-    - phpenv config-rm xdebug.ini || echo 'No xdebug config.'
-    - whoami
-    - id
-    - echo $PWD
-    - ls -ld $PWD
-    - ls -ld /drone
-    - echo $HOME
-    # install/update composer and php dependencies
     - composer config --unset platform && composer config platform.php 7.3
     - composer update
     # - PATH=${PATH//:\.\/node_modules\/\.bin/}
-    # run tests
     - make clean
     - make check_permissions
     - make code_sniffer
