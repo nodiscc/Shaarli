@@ -7,17 +7,6 @@ clone:
   disable: true
 
 steps:
-
-- name: restore-cache
-  image: drillster/drone-volume-cache
-  volumes:
-  - name: cache
-    path: /cache
-  settings:
-    restore: true
-    mount:
-      - /drone/.composer/cache
-
 - name: test-php-7.4
   image: shaarli/drone-ci-base:7.4-add-zip
   commands:
