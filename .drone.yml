@@ -19,7 +19,7 @@ steps:
       - /drone/.composer/cache
 
 - name: test-php-7.4
-  image: shaarli/drone-ci-base:7.4
+  image: shaarli/drone-ci-base:7.4-add-zip
   commands:
     - git clone --depth=50 --branch=$DRONE_BRANCH https://github.com/nodiscc/Shaarli.git .
     - git checkout $DRONE_COMMIT
@@ -41,7 +41,7 @@ clone:
 
 steps:
 - name: test-php-7.3
-  image: shaarli/drone-ci-base:7.3
+  image: shaarli/drone-ci-base:7.3-add-zip
   commands:
     - git clone --depth=50 --branch=$DRONE_BRANCH https://github.com/nodiscc/Shaarli.git .
     - git checkout $DRONE_COMMIT
