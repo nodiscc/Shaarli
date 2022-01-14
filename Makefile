@@ -101,7 +101,7 @@ composer_dependencies_dev: clean
 # These targets produce similar archives, featuring 3rd-party dependencies
 # to ease deployment on shared hosting.
 ##
-ARCHIVE_VERSION := shaarli-$$(git describe)-full
+ARCHIVE_VERSION := shaarli-$$(git describe || git rev-parse --short HEAD)-full
 ARCHIVE_PREFIX=Shaarli/
 
 release_archive: release_tar release_zip
