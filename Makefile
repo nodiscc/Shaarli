@@ -70,7 +70,7 @@ test: translate
 	@$(BIN)/phpunit --coverage-php coverage/main.cov --bootstrap tests/bootstrap.php --testsuite unit-tests
 
 locale_test_%:
-	@UT_LOCALE=$*.utf8 \
+	@LANG=$*.utf8 \
 		$(BIN)/phpunit \
 		--coverage-php coverage/$(firstword $(subst _, ,$*)).cov \
 		--bootstrap tests/languages/bootstrap.php \
