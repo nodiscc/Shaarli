@@ -2,6 +2,7 @@
 # Makefile for PHP code analysis & testing, documentation and release generation
 
 BIN = vendor/bin
+LANG = en_US.UTF
 
 all: check_permissions test
 
