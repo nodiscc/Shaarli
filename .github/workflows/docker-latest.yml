@@ -1,7 +1,7 @@
 name: Build/push Docker image (master/latest)
 on:
   push:
-    branches: [ master, docker-latest-replace-dev-with-hash ]
+    branches: [ master ]
 jobs:
   docker-build:
     runs-on: ubuntu-latest
@@ -25,6 +25,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: nodiscc/shaarli:latest
+          tags: shaarli/shaarli:latest
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
