@@ -16,6 +16,8 @@ jobs:
         run: sudo apt-get install gettext
       - name: Build full .zip
         run: make release_zip
+        with:
+          node-version: 16.19.1
       - name: Extract full .zip # workaround for https://github.com/actions/upload-artifact/issues/39, https://github.com/actions/upload-artifact/issues/248
         run: mkdir Shaarli && unzip -d Shaarli shaarli-*-full.zip
       - name: Upload full .zip as workflow artifact
