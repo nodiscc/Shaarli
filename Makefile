@@ -146,7 +146,7 @@ release_zip: composer_dependencies htmldoc translate build_frontend
 
 ### remove all unversioned files
 clean:
-	@git clean -df
+	@git clean -dfx
 	@rm -rf sandbox
 
 ### generate the AUTHORS file from Git commit information
