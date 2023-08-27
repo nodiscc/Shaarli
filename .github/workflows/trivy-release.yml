@@ -1,0 +1,26 @@
+name: trivy security scans (release)
+on:
+  schedule:
+    #- cron: '0 17 * * 1'
+    - cron: '40 * * * *'
+  workflow_dispatch:
+
+jobs:
+  trivy-repo:
+    runs-on: ubuntu-latest
+    name: trivy scan (release composer/yarn dependencies)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: release
+      - name: Run trivy scanner on repository
+        run: make test_trivy_repo TRIVY_EXIT_CODE=1
+  trivy-docker:
+    runs-on: ubuntu-latest
+    name: trivy scan (release docker image)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Run trivy scanner on release docker image
+        run: make test_trivy_docker TRIVY_TARGET_DOCKER_IMAGE=ghcr.io/shaarli/shaarli:release
