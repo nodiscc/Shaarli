@@ -200,6 +200,28 @@ find /var/www/links/cache/ /var/www/links/pagecache/ /var/www/links/tmp/ -type f
 sudo systemctl restart apache2
 ```
 
+### Datastore format
+
+Bookmarks are stored in the `data/datastore.php` file [[1]](https://github.com/shaarli/Shaarli/blob/master/application/bookmark/BookmarkIO.php), in the form of a PHP array which is then serialized, then base64-encoded, then gzipped. This data is then enclosed between `<?php ... ?>` tags before being written to disk.
+
+```bash
+$ cat /var/www/shaarli.example.org/data/datastore.php
+<?php /* 7P1bc9xYtiYIznOa5X9Axak6ETEdDt/3C3Py5FCkLpRImO5KRQ1VcwNYIMOEEdAAD8cXqyx8zhjNtYvVdZm/dRlbTY2dvptXrr7YZ4qZ/7I+QPdP2HWhruTLhGg6Ah3uWfonIwTQXff .... Nj9K+DWkdeZL993//+78= */ ?>
+```
+
+To display the array representing the data saved in `data/datastore.php`, use the following snippet:
+
+```bash
+php -r 'print(json_encode(unserialize(gzinflate(base64_decode(file_get_contents("data/datastore.php"))))));'
+```
+
+Alternatively, you can transform to JSON format (and pretty-print if you have `jq` installed):
+
+```bash
+php -r 'print(json_encode(unserialize(gzinflate(base64_decode(preg_replace("!.*/\* (.+) \*/.*!", "$1", file_get_contents("data/datastore.php")))))));' | jq .
+```
+
+
 -------------------------------------------------------
 
 ## Support
