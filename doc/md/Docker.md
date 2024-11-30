@@ -1,33 +1,13 @@
 
 # Docker
 
-[Docker](https://docs.docker.com/get-started/overview/) is an open platform for developing, shipping, and running applications
+[Docker](https://docs.docker.com/get-started/overview/) is an open platform for developing, shipping, and running applications in lightweight containers.
 
 ## Install Docker
 
-Install [Docker](https://docs.docker.com/engine/install/), by following the instructions relevant to your OS / distribution, and start the service. For example on [Debian](https://docs.docker.com/engine/install/debian/):
+Install [Docker](https://docs.docker.com/engine/install/), by following the instructions relevant to your OS / distribution, and start the service.
 
-```bash
-# update your package lists
-sudo apt update
-# remove old versions
-sudo apt-get remove docker docker-engine docker.io containerd runc
-# install requirements
-sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-# add docker's GPG signing key
-curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
-# add the repository
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
-# install docker engine
-sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io
-# Start and enable Docker service
-sudo systemctl enable docker && sudo systemctl start docker
-# verify that Docker is properly configured
-sudo docker run hello-world
-```
-
-In order to run Docker commands as a non-root user, you must add the `docker` group to this user:
+_Optional:_ In order to run Docker commands as a non-root user (i.e. without `sudo`), you must add your user account to the `docker` group. Keep in mind that this effectively gives this user account [full root privileges](https://docs.docker.com/engine/security/#docker-daemon-attack-surface), without password.
 
 ```bash
 # Add docker group as secondary group
@@ -48,16 +28,20 @@ Shaarli images are available on [GitHub Container Registry](https://github.com/s
 These images are built automatically on Github Actions and rely on:
 
 - [Alpine Linux](https://www.alpinelinux.org/)
-- [PHP7-FPM](https://php-fpm.org/)
+- [PHP-FPM](https://php-fpm.org/)
 - [Nginx](https://nginx.org/)
 
-Additional Dockerfiles are provided for the `arm32v7` platform, relying on [Linuxserver.io Alpine armhf images](https://hub.docker.com/r/lsiobase/alpine.armhf/). These images must be built using [`docker build`](https://docs.docker.com/engine/reference/commandline/build/) on an `arm32v7` machine or using an emulator such as [qemu](https://blog.balena.io/building-arm-containers-on-any-x86-machine-even-dockerhub/).
+Thes images are suitable for the `amd64`, `arm/v7` and `arm64` CPU architectures.
 
-Here is an example of how to run Shaarli latest image using Docker:
+```{note}
+Additional Dockerfiles are provided for the `arm32v7` platform, relying on [Linuxserver.io Alpine armhf images](https://hub.docker.com/r/lsiobase/alpine.armhf/). These images must be built using [`docker build`](https://docs.docker.com/engine/reference/commandline/build/) on an `arm32v7` machine or using an emulator such as [qemu](https://blog.balena.io/building-arm-containers-on-any-x86-machine-even-dockerhub/).
+```
+
+To run the `latest` Shaarli image using Docker:
 
 ```bash
 # download the 'latest' image from GitHub Container Registry
-docker pull ghcr.io/shaarli/shaarli
+docker pull ghcr.io/shaarli/shaarli:latest
 
 # create persistent data volumes/directories on the host
 docker volume create shaarli-data
@@ -79,17 +63,16 @@ docker run --detach \
 
 # verify that the container is running
 docker ps | grep myshaarli
-
-# to completely remove the container
-docker stop myshaarli # stop the running container
-docker ps | grep myshaarli # verify the container is no longer running
-docker ps -a | grep myshaarli # verify the container is stopped
-docker rm myshaarli # destroy the container
-docker ps -a | grep myshaarli # verify th container has been destroyed
-
 ```
 
-After running `docker run` command, your Shaarli instance should be available on the host machine at [localhost:8000](http://localhost:8000). In order to access your instance through a reverse proxy, we recommend using our [Docker Compose](#docker-compose) build.
+Your Shaarli instance should be available on the host machine at [http://localhost:8000](http://localhost:8000). In order to access your instance through a reverse proxy, we recommend using our [Docker Compose](#docker-compose) build.
+
+Stopping the container will also completely remove it (but not associated volumes) since it was started with `--rm`:
+
+```bash
+docker stop myshaarli # stop the running container
+docker ps -a | grep myshaarli # verify the container has been destroyed
+```
 
 ## Docker Compose
 
@@ -97,16 +80,11 @@ A [Compose file](https://docs.docker.com/compose/compose-file/) is a common form
 
 A `docker-compose.yml` file can be used to run a persistent/autostarted shaarli service using [Docker Compose](https://docs.docker.com/compose/) or in a [Docker stack](https://docs.docker.com/engine/reference/commandline/stack_deploy/).
 
-Shaarli provides configuration file for Docker Compose, that will setup a Shaarli instance, a [Træfik](https://traefik.io/traefik/) instance (reverse proxy) with [Let's Encrypt](https://letsencrypt.org/) certificates, a Docker network, and volumes for Shaarli data and Træfik TLS configuration and certificates.
+Shaarli provides a `docker-compsoe.yml`, that will setup a Shaarli instance, a [Træfik](https://traefik.io/traefik/) instance (reverse proxy) with [Let's Encrypt](https://letsencrypt.org/) certificates, a Docker network, and volumes for Shaarli data and Træfik TLS configuration and certificates.
 
-Download docker-compose from the [release page](https://docs.docker.com/compose/install/):
+Download docker-compose from the [release page](https://docs.docker.com/compose/install/).
 
-```bash
-$ sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-$ sudo chmod +x /usr/local/bin/docker-compose
-```
-
-To run Shaarli container and its reverse proxy, you can execute the following commands:
+Run the following command to start Shaarli and its reverse proxy:
 
 ```bash
 # create a new directory to store the configuration:
