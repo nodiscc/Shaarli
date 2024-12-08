@@ -80,7 +80,7 @@ A [Compose file](https://docs.docker.com/compose/compose-file/) is a common form
 
 A `docker-compose.yml` file can be used to run a persistent/autostarted shaarli service using [Docker Compose](https://docs.docker.com/compose/) or in a [Docker stack](https://docs.docker.com/engine/reference/commandline/stack_deploy/).
 
-Shaarli provides a `docker-compsoe.yml`, that will setup a Shaarli instance, a [Træfik](https://traefik.io/traefik/) instance (reverse proxy) with [Let's Encrypt](https://letsencrypt.org/) certificates, a Docker network, and volumes for Shaarli data and Træfik TLS configuration and certificates.
+Shaarli provides a `docker-compose.yml`, that will setup a Shaarli instance, a [Træfik](https://traefik.io/traefik/) instance (reverse proxy) with [Let's Encrypt](https://letsencrypt.org/) certificates, a Docker network, and volumes for Shaarli data and Træfik TLS configuration and certificates.
 
 Download docker-compose from the [release page](https://docs.docker.com/compose/install/).
 
@@ -88,26 +88,27 @@ Run the following command to start Shaarli and its reverse proxy:
 
 ```bash
 # create a new directory to store the configuration:
-$ mkdir shaarli && cd shaarli
+$ sudo mkdir shaarli && cd shaarli
 # Download the latest version of Shaarli's docker-compose.yml
 $ curl -L https://raw.githubusercontent.com/shaarli/Shaarli/latest/docker-compose.yml -o docker-compose.yml
 # Create the .env file and fill in your VPS and domain information
 # (replace <shaarli.mydomain.org>, <admin@mydomain.org> and <latest> with your actual information)
+# Available Docker tags can be found at https://github.com/shaarli/Shaarli/pkgs/container/shaarli/versions?filters%5Bversion_type%5D=tagged
 $ echo 'SHAARLI_VIRTUAL_HOST=shaarli.mydomain.org' > .env
 $ echo 'SHAARLI_LETSENCRYPT_EMAIL=admin@mydomain.org' >> .env
-# Available Docker tags can be found at https://github.com/shaarli/Shaarli/pkgs/container/shaarli/versions?filters%5Bversion_type%5D=tagged
 $ echo 'SHAARLI_DOCKER_TAG=latest' >> .env
-# Pull the Docker images
+# Pull the images
 $ docker-compose pull
 # Run!
 $ docker-compose up -d
 ```
 
-After a few seconds, you should be able to access your Shaarli instance at [https://shaarli.mydomain.org](https://shaarli.mydomain.org) (replace your own domain name).
+After a few seconds, you should be able to access your Shaarli instance at [https://shaarli.mydomain.org](https://shaarli.mydomain.org).
+
 
 ## Running dockerized Shaarli as a systemd service
 
-It is possible to start a dockerized Shaarli instance as a systemd service (systemd is the service management tool on several distributions). After installing Docker, use the following steps to run your shaarli container Shaarli to run on system start.
+It is possible to start a dockerized Shaarli instance as a systemd service (systemd is the service management tool on several distributions) that will start automatically on system boot:
 
 As root, create `/etc/systemd/system/docker.shaarli.service`:
 
