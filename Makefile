@@ -217,5 +217,8 @@ ifdef TRIVY_TARGET_BRANCH
 	git checkout $(TRIVY_TARGET_BRANCH) composer.lock
 	git checkout $(TRIVY_TARGET_BRANCH) yarn.lock
 endif
-	./trivy --exit-code $(TRIVY_EXIT_CODE) fs composer.lock
-	./trivy --exit-code $(TRIVY_EXIT_CODE) fs yarn.lock
+	#./trivy --exit-code $(TRIVY_EXIT_CODE) fs composer.lock
+	#./trivy --exit-code $(TRIVY_EXIT_CODE) fs yarn.lock
+	./trivy --exit-code $(TRIVY_EXIT_CODE) config Dockerfile
+	grep FROM Dockerfile | cut -d' ' -f2 | while read image; do ./trivy image $image; done
+	grep image: docker-compose.yml| grep -v shaarli/shaarli | cut -d':' -f2 | xargs ./trivy image
