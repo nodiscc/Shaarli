@@ -31,7 +31,7 @@ These images are built automatically on Github Actions and rely on:
 - [PHP-FPM](https://php-fpm.org/)
 - [Nginx](https://nginx.org/)
 
-Thes images are suitable for the `amd64`, `arm/v7` and `arm64` CPU architectures.
+These images are suitable for the `amd64`, `arm/v7` and `arm64` CPU architectures.
 
 ```{note}
 Additional Dockerfiles are provided for the `arm32v7` platform, relying on [Linuxserver.io Alpine armhf images](https://hub.docker.com/r/lsiobase/alpine.armhf/). These images must be built using [`docker build`](https://docs.docker.com/engine/reference/commandline/build/) on an `arm32v7` machine or using an emulator such as [qemu](https://blog.balena.io/building-arm-containers-on-any-x86-machine-even-dockerhub/).
@@ -81,7 +81,7 @@ A [Compose file](https://docs.docker.com/compose/compose-file/) is a common form
 Shaarli provides a `docker-compose.yml` file which can be used to run a persistent/autostarted shaarli service using [Docker Compose](https://docs.docker.com/compose/) or in a [Docker stack](https://docs.docker.com/engine/reference/commandline/stack_deploy/). It sets up a Shaarli instance, a [Træfik](https://traefik.io/traefik/) reverse proxy instance with [Let's Encrypt](https://letsencrypt.org/) certificates, a Docker network, and volumes for Shaarli data and Træfik TLS configuration and certificates.
 
 * Download docker-compose from the [release page](https://docs.docker.com/compose/install/).
-* Run the following command to start Shaarli and its reverse proxy:
+* Run the following commands to start Shaarli and its reverse proxy:
 
 ```bash
 # create a new directory to store your configuration and data
@@ -139,9 +139,9 @@ WantedBy=multi-user.target
 ```
 
 ```bash
-# reload systemd services definitions
+# reload systemd service definitions
 systemctl daemon-reload
-# start the servie and enable it a boot time
+# start the service and enable it a boot time
 systemctl enable docker.shaarli.service --now
 # verify that the service is running
 systemctl status docker.*
