@@ -134,6 +134,13 @@ class BookmarkIO
                 throw new NotEnoughSpaceException();
             }
 
+            if (is_file($this->datastore)) {
+                $backupFilename = $this->createBackup();
+                if ($backupFilename) {
+                    $this->cleanupOldBackups($backupFilename);
+                }
+            }
+
             file_put_contents(
                 $this->datastore,
                 $data
@@ -173,5 +180,52 @@ class BookmarkIO
         }
 
         return disk_free_space(dirname($this->datastore)) > (strlen($data) + 1024 * 500);
+    }
+
+    /**
+     * Create a timestamped backup of the current datastore before it gets overwritten.
+     *
+     * @return string|false Backup filename on success, false on failure
+     */
+    protected function createBackup()
+    {
+        $backupFilename = $this->datastore . '.' . date('YmdHis') . '.bak';
+        if (copy($this->datastore, $backupFilename)) {
+            error_log('Backup created: ' . $backupFilename);
+            return $backupFilename;
+        }
+        error_log('Backup creation failed for: ' . $this->datastore);
+        return false;
+    }
+
+    /**
+     * Remove old backups, keeping only the most recent one.
+     *
+     * @param string $currentBackupFilename The current backup filename to keep
+     */
+    protected function cleanupOldBackups(string $currentBackupFilename): void
+    {
+        $directory = dirname($this->datastore);
+        $backups = glob($directory . '/*.bak');
+
+        if (!$backups) {
+            return;
+        }
+
+        usort($backups, function ($a, $b) {
+            return filemtime($b) - filemtime($a);
+        });
+
+        array_shift($backups);
+        $deletedCount = 0;
+        foreach ($backups as $oldBackup) {
+            if ($oldBackup !== $currentBackupFilename && @unlink($oldBackup)) {
+                $deletedCount++;
+            }
+        }
+
+        if ($deletedCount > 0) {
+            error_log('Backup cleanup: deleted ' . $deletedCount . ' old backup(s)');
+        }
     }
 }

@@ -393,7 +393,7 @@ This guide assumes that you have:
 
 ```bash
 # on Debian-based systems
-sudo apt install composer yarnpkg gettext phpunit yarnpkg php8.2-mbstring php8.2-gd php8.2-intl php8.2-curl php8.2-gettext php8.2-ldap
+sudo apt install composer yarnpkg gettext phpunit yarnpkg php8.4-mbstring php8.4-gd php8.4-intl php8.4-curl php8.4-gettext php8.4-ldap
 make composer_dependencies_dev
 ```
 

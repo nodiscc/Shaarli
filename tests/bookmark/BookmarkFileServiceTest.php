@@ -1270,4 +1270,185 @@ class BookmarkFileServiceTest extends TestCase
         $method->setAccessible(true);
         return $method;
     }
+
+    /**
+     * Allows to test BookmarkIO's private methods
+     */
+    protected static function getBookmarkIOMethod($name)
+    {
+        $class = new ReflectionClass('Shaarli\Bookmark\BookmarkIO');
+        $method = $class->getMethod($name);
+        $method->setAccessible(true);
+        return $method;
+    }
+
+    /**
+     * Test backup creation creates a file with correct timestamp format.
+     */
+    public function testBackupCreationCreatesFile()
+    {
+        $bookmarkIO = $this->getBookmarkIO();
+        $method = self::getBookmarkIOMethod('createBackup');
+        $result = $method->invoke($bookmarkIO);
+
+        $this->assertIsString($result);
+        $this->assertMatchesRegularExpression('#^\S+.\d{14}\.bak$#', $result);
+        $this->assertFileExists($result);
+        $this->assertEquals(file_get_contents($this->conf->get('resource.datastore')), file_get_contents($result));
+    }
+
+    /**
+     * Test cleanup keeps only the most recent backup.
+     */
+    public function testCleanupOldBackupsKeepsOnlyLast()
+    {
+        $datastore = $this->conf->get('resource.datastore');
+        $directory = dirname($datastore);
+
+        $this->createTestBackups($directory, 3);
+
+        $bookmarkIO = $this->getBookmarkIO();
+        $method = self::getBookmarkIOMethod('cleanupOldBackups');
+        $method->invoke($bookmarkIO, '');
+
+        $backups = glob($directory . '/*.bak');
+        $this->assertCount(1, $backups);
+    }
+
+    /**
+     * Test cleanup handles single backup gracefully.
+     */
+    public function testCleanupOldBackupsHandlesSingleBackup()
+    {
+        $datastore = $this->conf->get('resource.datastore');
+        $directory = dirname($datastore);
+
+        copy($datastore, $directory . '/single.bak');
+
+        $bookmarkIO = $this->getBookmarkIO();
+        $method = self::getBookmarkIOMethod('cleanupOldBackups');
+        $newBackup = $datastore . '.' . date('YmdHis') . '.bak';
+        $method->invoke($bookmarkIO, $newBackup);
+
+        $backups = glob($directory . '/*.bak');
+        $this->assertCount(1, $backups);
+
+        @unlink($directory . '/single.bak');
+    }
+
+    /**
+     * Test cleanup handles no backups gracefully.
+     */
+    public function testCleanupOldBackupsHandlesNoBackups()
+    {
+        $bookmarkIO = $this->getBookmarkIO();
+        $method = self::getBookmarkIOMethod('cleanupOldBackups');
+
+        $this->expectNotToPerformAssertions();
+        $method->invoke($bookmarkIO, 'nonexistent.bak');
+    }
+
+    /**
+     * Test write succeeds even if backup creation fails.
+     */
+    public function testWriteSucceedsEvenIfBackupFails()
+    {
+        $bookmark = new Bookmark();
+        $bookmark->setUrl('https://example.com');
+        $bookmark->setTitle('Test Bookmark');
+
+        $countBefore = $this->privateLinkDB->count();
+        $this->privateLinkDB->add($bookmark);
+        $countAfter = $this->privateLinkDB->count();
+
+        $this->assertEquals($countBefore + 1, $countAfter);
+    }
+
+    /**
+     * Test backup filename uniqueness with timestamps.
+     */
+    public function testBackupFilenameUniqueness()
+    {
+        $bookmarkIO = $this->getBookmarkIO();
+        $method = self::getBookmarkIOMethod('createBackup');
+
+        $backup1 = $method->invoke($bookmarkIO);
+        sleep(1);
+        $backup2 = $method->invoke($bookmarkIO);
+
+        $this->assertNotEquals($backup1, $backup2);
+        $this->assertFileExists($backup1);
+        $this->assertFileExists($backup2);
+
+        @unlink($backup1);
+        @unlink($backup2);
+    }
+
+    /**
+     * Test cleanup deletes oldest backups first based on modification time.
+     */
+    public function testCleanupDeletesOldestBackupsFirst()
+    {
+        $datastore = $this->conf->get('resource.datastore');
+        $directory = dirname($datastore);
+
+        $backup1 = $directory . '/oldest.bak';
+        $backup2 = $directory . '/middle.bak';
+        $backup3 = $directory . '/newest.bak';
+
+        copy($datastore, $backup1);
+        sleep(1);
+        copy($datastore, $backup2);
+        sleep(1);
+        copy($datastore, $backup3);
+
+        $bookmarkIO = $this->getBookmarkIO();
+        $method = self::getBookmarkIOMethod('cleanupOldBackups');
+        $newBackup = $datastore . '.' . date('YmdHis') . '.bak';
+        $method->invoke($bookmarkIO, $newBackup);
+
+        $backups = glob($directory . '/*.bak');
+        $this->assertCount(1, $backups);
+
+        @unlink($backup1);
+        @unlink($backup2);
+        @unlink($backup3);
+    }
+
+    /**
+     * Get BookmarkIO instance for testing.
+     */
+    protected function getBookmarkIO()
+    {
+        $conf = new ConfigManager('sandbox/config');
+        $conf->set('resource.datastore', self::$testDatastore);
+        return new BookmarkIO($conf, new NoMutex());
+    }
+
+    /**
+     * Clean up backup files after tests.
+     */
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        
+        $directory = dirname(self::$testDatastore);
+        $backups = glob($directory . '/*.bak');
+        foreach ($backups as $backup) {
+            @unlink($backup);
+        }
+    }
+
+    /**
+     * Create test backup files with different timestamps.
+     */
+    protected function createTestBackups($directory, $count)
+    {
+        $datastore = $this->conf->get('resource.datastore');
+        for ($i = 0; $i < $count; $i++) {
+            $backup = $directory . '/test_' . str_pad($i, 3, '0', STR_PAD_LEFT) . '.bak';
+            copy($datastore, $backup);
+            touch($backup, time() - ($count - $i) * 100);
+        }
+    }
 }
