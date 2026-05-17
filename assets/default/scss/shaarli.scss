@@ -1708,6 +1708,12 @@ form {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  .missing-only-info {
+    padding: 10px 0;
+    font-style: italic;
+    color: var(--text-color);
+  }
 }
 
 // SERVER PAGE

@@ -9,6 +9,10 @@
 <div class="center thumbnails-update-container">
   <div class="thumbnail-placeholder" style="width: {$thumbnails_width}px; height: {$thumbnails_height}px;"></div>
 
+  {if="$missing_only"}
+  <p class="missing-only-info">{'Updating only missing thumbnails.'|t}</p>
+  {/if}
+
   <div class="thumbnail-link-title"></div>
 
   <div class="progressbar">

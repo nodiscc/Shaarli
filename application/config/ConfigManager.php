@@ -387,6 +387,7 @@ class ConfigManager
         $this->setEmpty('thumbnails.mode', Thumbnailer::MODE_ALL);
         $this->setEmpty('thumbnails.width', '125');
         $this->setEmpty('thumbnails.height', '90');
+        $this->setEmpty('thumbnails.update_missing_only', false);
 
         $this->setEmpty('translation.language', 'auto');
         $this->setEmpty('translation.mode', 'php');

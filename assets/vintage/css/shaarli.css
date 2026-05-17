@@ -1240,6 +1240,12 @@ ul.successes {
     white-space: nowrap;
 }
 
+.thumbnails-update-container .missing-only-info {
+    text-align: center;
+    font-style: italic;
+    padding: 10px 0;
+}
+
 .progressbar {
     border-radius: 6px;
     background-color: #111;

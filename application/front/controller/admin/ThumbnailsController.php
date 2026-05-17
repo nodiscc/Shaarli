@@ -21,6 +21,7 @@ class ThumbnailsController extends ShaarliAdminController
      */
     public function index(Request $request, Response $response): Response
     {
+        $missingOnly = (bool) $this->container->conf->get('thumbnails.update_missing_only', false);
         $ids = [];
         foreach ($this->container->bookmarkService->search()->getBookmarks() as $bookmark) {
             // A note or not HTTP(S)
@@ -28,10 +29,15 @@ class ThumbnailsController extends ShaarliAdminController
                 continue;
             }
 
+            if ($missingOnly && !$bookmark->shouldUpdateThumbnail()) {
+                continue;
+            }
+
             $ids[] = $bookmark->getId();
         }
 
         $this->assignView('ids', $ids);
+        $this->assignView('missing_only', $missingOnly);
         $this->assignView(
             'pagetitle',
             t('Thumbnails update') . ' - ' . $this->container->conf->get('general.title', 'Shaarli')

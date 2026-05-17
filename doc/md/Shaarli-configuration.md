@@ -225,6 +225,7 @@ Must be an associative array: `translation domain => translation path`.
 - **width:** width of generated thumbnails, in pixels
 - **height:** height of generated thumbnails, in pixels
 - **mode:** enable thumbnails for `all` shaares, or `common` media hosts, or `none`.
+- **update_missing_only:** when `true`, the thumbnail synchronization page only updates bookmarks missing a thumbnail, instead of regenerating all thumbnails.
 
 ## Plugins configuration
 

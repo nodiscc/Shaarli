@@ -7,6 +7,7 @@ namespace Shaarli\Front\Controller\Admin;
 use Shaarli\Bookmark\Bookmark;
 use Shaarli\Bookmark\Exception\BookmarkNotFoundException;
 use Shaarli\Bookmark\SearchResult;
+use Shaarli\Config\ConfigManager;
 use Shaarli\TestCase;
 use Shaarli\Thumbnailer;
 use Slim\Http\Request;
@@ -38,6 +39,20 @@ class ThumbnailsControllerTest extends TestCase
         $request = $this->createMock(Request::class);
         $response = new Response();
 
+        $this->container->conf = $this->createMock(ConfigManager::class);
+        $this->container->conf
+            ->method('get')
+            ->willReturnCallback(function (string $key, $default = null) {
+                if ($key === 'thumbnails.update_missing_only') {
+                    return false;
+                }
+                if ($key === 'thumbnails.mode') {
+                    return Thumbnailer::MODE_ALL;
+                }
+                return $default === null ? $key : $default;
+            })
+        ;
+
         $this->container->bookmarkService
             ->expects(static::once())
             ->method('search')
@@ -56,6 +71,81 @@ class ThumbnailsControllerTest extends TestCase
 
         static::assertSame('Thumbnails update - Shaarli', $assignedVariables['pagetitle']);
         static::assertSame([1, 3], $assignedVariables['ids']);
+        static::assertFalse($assignedVariables['missing_only']);
+    }
+
+    /**
+     * Test displaying the thumbnails update page with missing-only mode.
+     */
+    public function testIndexMissingOnly(): void
+    {
+        $assignedVariables = [];
+        $this->assignTemplateVars($assignedVariables);
+
+        $request = $this->createMock(Request::class);
+        $response = new Response();
+
+        $this->container->conf = $this->createMock(ConfigManager::class);
+        $this->container->conf
+            ->method('get')
+            ->willReturnCallback(function (string $key, $default = null) {
+                if ($key === 'thumbnails.update_missing_only') {
+                    return true;
+                }
+                if ($key === 'thumbnails.mode') {
+                    return Thumbnailer::MODE_ALL;
+                }
+                return $default === null ? $key : $default;
+            })
+        ;
+
+        $bookmark1 = (new Bookmark())
+            ->setId(1)
+            ->setUrl('http://url1.tld')
+            ->setTitle('Title 1')
+            ->setThumbnail('cache/thumb1.png')
+        ;
+        $bookmark2 = (new Bookmark())
+            ->setId(2)
+            ->setUrl('?abcdef')
+            ->setTitle('Note 1')
+        ;
+        $bookmark3 = (new Bookmark())
+            ->setId(3)
+            ->setUrl('http://url2.tld')
+            ->setTitle('Title 2')
+            ->setThumbnail(false)
+        ;
+        $bookmark4 = (new Bookmark())
+            ->setId(4)
+            ->setUrl('ftp://domain.tld', ['ftp'])
+            ->setTitle('FTP')
+        ;
+        $bookmark5 = (new Bookmark())
+            ->setId(5)
+            ->setUrl('http://url3.tld')
+            ->setTitle('Title 3')
+        ;
+
+        $this->container->bookmarkService
+            ->expects(static::once())
+            ->method('search')
+            ->willReturn(SearchResult::getSearchResult([$bookmark1, $bookmark2, $bookmark3, $bookmark4, $bookmark5]))
+        ;
+
+        $result = $this->controller->index($request, $response);
+
+        static::assertSame(200, $result->getStatusCode());
+        static::assertSame('thumbnails', (string) $result->getBody());
+
+        static::assertSame('Thumbnails update - Shaarli', $assignedVariables['pagetitle']);
+        // bookmark1: thumbnail='cache/thumb1.png' (file doesn't exist) → needs update
+        // bookmark2: note → skipped
+        // bookmark3: thumbnail=false → already determined no thumbnail, skipped
+        // bookmark4: FTP → skipped
+        // bookmark5: thumbnail=null → needs update
+        static::assertSame([1, 5], $assignedVariables['ids']);
+        static::assertTrue($assignedVariables['missing_only']);
     }
 
     /**
