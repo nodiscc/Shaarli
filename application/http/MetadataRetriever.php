@@ -34,6 +34,36 @@ class MetadataRetriever
      */
     public function retrieve(string $url): array
     {
+        // SSRF protection: reject localhost, private IPs, and link-local addresses
+        $urlObj = new Url($url);
+        $host = $urlObj->getHost();
+
+        // Block localhost hostname string
+        if ($host === 'localhost' || $host === 'localhost.') {
+            return [
+                'title' => null,
+                'description' => null,
+                'tags' => null,
+            ];
+        }
+
+        // Resolve hostname to IP and check against private ranges
+        if ($host !== false) {
+            $records = $this->resolveWithTimeout($host, 3);
+            if (!empty($records)) {
+                foreach ($records as $record) {
+                    $ip = $record['ip'] ?? $record['ipv6'] ?? null;
+                    if ($ip !== null && $this->isPrivateIp($ip)) {
+                        return [
+                            'title' => null,
+                            'description' => null,
+                            'tags' => null,
+                        ];
+                    }
+                }
+            }
+        }
+
         $charset = null;
         $title = null;
         $description = null;
@@ -76,5 +106,66 @@ class MetadataRetriever
     protected function cleanMetadata($data): ?string
     {
         return !is_string($data) || empty(trim($data)) ? null : trim($data);
+    }
+
+    /**
+     * Resolve hostname to IP addresses with a timeout to prevent hanging on malicious domains.
+     *
+     * @param string $host   Hostname to resolve
+     * @param int    $timeout Timeout in seconds
+     *
+     * @return array|null DNS records or null on timeout/failure
+     */
+    protected function resolveWithTimeout(string $host, int $timeout = 3): ?array
+    {
+        $resolved = null;
+        $timedOut = false;
+
+        if (function_exists('pcntl_signal') && function_exists('pcntl_alarm')) {
+            pcntl_signal(SIGALRM, function () use (&$timedOut) {
+                $timedOut = true;
+            });
+            pcntl_alarm($timeout);
+            $records = dns_get_record($host, DNS_A | DNS_AAAA, $authns, $addtl);
+            pcntl_alarm(0);
+            pcntl_signal(SIGALRM, SIG_DFL);
+            if (!$timedOut && !empty($records)) {
+                $resolved = $records;
+            }
+        } else {
+            // Fallback: no timeout available, resolve directly
+            $records = dns_get_record($host, DNS_A | DNS_AAAA, $authns, $addtl);
+            if (!empty($records)) {
+                $resolved = $records;
+            }
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * Check if an IP address is private, loopback, or link-local.
+     *
+     * @param string $ip IP address to check
+     *
+     * @return bool true if the IP is private/loopback/link-local
+     */
+    protected function isPrivateIp(string $ip): bool
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return (bool)(
+                filter_var($ip, FILTER_FLAG_NO_PRIV_RANGE) === false
+                && filter_var($ip, FILTER_FLAG_NO_RES_RANGE) === false
+            );
+        }
+
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            return (bool)(
+                filter_var($ip, FILTER_FLAG_NO_PRIV_RANGE) === false
+                || filter_var($ip, FILTER_FLAG_NO_RES_RANGE) === false
+            );
+        }
+
+        return false;
     }
 }

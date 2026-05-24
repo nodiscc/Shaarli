@@ -158,4 +158,99 @@ class MetadataRetrieverTest extends TestCase
 
         static::assertSame($expectedResult, $result);
     }
+
+    /**
+     * Test that localhost URLs are rejected (SSRF protection).
+     */
+    public function testSsrfLocalhostRejected(): void
+    {
+        $result = $this->retriever->retrieve('http://localhost/path');
+        static::assertSame(['title' => null, 'description' => null, 'tags' => null], $result);
+
+        $result = $this->retriever->retrieve('http://localhost./path');
+        static::assertSame(['title' => null, 'description' => null, 'tags' => null], $result);
+    }
+
+    /**
+     * Test that URLs with private IP addresses are rejected (SSRF protection).
+     */
+    public function testSsrfPrivateIpRejected(): void
+    {
+        $privateIps = [
+            '127.0.0.1',
+            '127.0.0.2',
+            '10.0.0.1',
+            '10.255.255.255',
+            '172.16.0.1',
+            '172.31.255.255',
+            '192.168.0.1',
+            '192.168.255.255',
+            '169.254.169.254',
+        ];
+
+        foreach ($privateIps as $ip) {
+            $result = $this->retriever->retrieve("http://{$ip}/path");
+            static::assertSame(['title' => null, 'description' => null, 'tags' => null], $result, "Failed to reject private IP: {$ip}");
+        }
+    }
+
+    /**
+     * Test that URLs with public IPs pass through to the HTTP layer.
+     */
+    public function testSsrfPublicIpAllowed(): void
+    {
+        $url = 'https://93.184.216.34/link';
+        $remoteTitle = 'Remote Title';
+        $remoteDesc = 'A description';
+        $remoteTags = 'tag1';
+
+        $this->httpAccess
+            ->expects(static::once())
+            ->method('getCurlHeaderCallback')
+            ->willReturnCallback(function (): callable {
+                return function (): void {
+                };
+            });
+        $this->httpAccess
+            ->expects(static::once())
+            ->method('getCurlDownloadCallback')
+            ->willReturnCallback(function (
+                &$charset,
+                &$title,
+                &$description,
+                &$tags
+            ): callable {
+                return function () use (&$charset, &$title, &$description, &$tags): void {
+                    $charset = 'utf-8';
+                    $title = 'Remote Title';
+                    $description = 'A description';
+                    $tags = 'tag1';
+                };
+            });
+        $this->httpAccess
+            ->expects(static::once())
+            ->method('getHttpResponse')
+            ->with($url, 30, 4194304)
+            ->willReturnCallback(function ($url, $timeout, $maxBytes, $headerCallback, $dlCallback): void {
+                $headerCallback();
+                $dlCallback();
+            });
+
+        $result = $this->retriever->retrieve($url);
+
+        static::assertSame([
+            'title' => 'Remote Title',
+            'description' => 'A description',
+            'tags' => 'tag1',
+        ], $result);
+    }
+
+    /**
+     * Test that unresolvable hosts return empty metadata.
+     */
+    public function testSsrfInvalidHostRejected(): void
+    {
+        $result = $this->retriever->retrieve('http://thisdomaindoesnotexist12345.invalid/path');
+        static::assertSame(['title' => null, 'description' => null, 'tags' => null], $result);
+    }
 }
