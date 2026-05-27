@@ -213,6 +213,9 @@ class Url
      */
     public function isHttp()
     {
+        if (!isset($this->parts['scheme'])) {
+            return false;
+        }
         return strpos(strtolower($this->parts['scheme']), 'http') !== false;
     }
 }

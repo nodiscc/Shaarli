@@ -76,7 +76,12 @@ function get_http_response(
 
     // General cURL settings
     curl_setopt($ch, CURLOPT_AUTOREFERER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+    curl_setopt(
+        $ch,
+        CURLOPT_REDIR_PROTOCOLS,
+        CURLPROTO_HTTP | CURLPROTO_HTTPS
+    );
     // Default header download if the $curlHeaderFunction is not defined
     curl_setopt($ch, CURLOPT_HEADER, !is_callable($curlHeaderFunction));
     curl_setopt(
@@ -127,10 +132,9 @@ function get_http_response(
         return [[0 => 'curl_exec() error: ' . $errorStr], false];
     }
 
-    // Formatting output like the fallback method
-    $rawHeaders = substr($response, 0, $headSize);
+    curl_close($ch);
 
-    // Keep only headers from latest redirection
+    $rawHeaders = substr($response, 0, $headSize);
     $rawHeadersArrayRedirs = explode("\r\n\r\n", trim($rawHeaders));
     $rawHeadersLastRedir = end($rawHeadersArrayRedirs);
 
@@ -246,6 +250,9 @@ function get_redirected_headers($url, $redirectionLimit = 3)
         $redirection = is_array($headers['Location']) ? end($headers['Location']) : $headers['Location'];
         if ($redirection != $url) {
             $redirection = getAbsoluteUrl($url, $redirection);
+            if (!validateRedirectUrl($redirection)) {
+                return [false, false];
+            }
             return get_redirected_headers($redirection, $redirectionLimit);
         }
     }
@@ -280,6 +287,87 @@ function getAbsoluteUrl($originalUrl, $newUrl)
     }
     $final .= ltrim($newUrl, '/');
     return $final;
+}
+
+/**
+ * Validate a redirect URL to prevent SSRF attacks.
+ *
+ * Checks that the URL uses HTTP/HTTPS, the hostname is not localhost,
+ * and the resolved IP is not a private/loopback/link-local address.
+ *
+ * @param string $url The URL to validate.
+ * @return bool true if the URL is safe to follow, false otherwise.
+ */
+function validateRedirectUrl($url)
+{
+    $urlObj = new Url($url);
+
+    if (!$urlObj->isHttp()) {
+        return false;
+    }
+
+    $host = $urlObj->getHost();
+    if ($host === false) {
+        return false;
+    }
+
+    if ($host === 'localhost' || $host === 'localhost.') {
+        return false;
+    }
+
+    if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false
+        || filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
+    ) {
+        if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return !(filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false);
+        }
+        return !(filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE) === false);
+    }
+
+    $timedOut = false;
+    $records = null;
+
+    if (function_exists('pcntl_signal') && function_exists('pcntl_alarm')) {
+        pcntl_signal(SIGALRM, function () use (&$timedOut) {
+            $timedOut = true;
+        });
+        pcntl_alarm(3);
+        $records = @dns_get_record($host, DNS_A | DNS_AAAA, $authns, $addtl);
+        pcntl_alarm(0);
+        pcntl_signal(SIGALRM, SIG_DFL);
+        if ($timedOut) {
+            return false;
+        }
+    } else {
+        $records = @dns_get_record($host, DNS_A | DNS_AAAA, $authns, $addtl);
+    }
+
+    if (empty($records)) {
+        return true;
+    }
+
+    foreach ($records as $record) {
+        $ip = $record['ip'] ?? $record['ipv6'] ?? null;
+        if ($ip === null) {
+            continue;
+        }
+
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false
+            ) {
+                return false;
+            }
+        }
+
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE) === false
+            ) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 /**

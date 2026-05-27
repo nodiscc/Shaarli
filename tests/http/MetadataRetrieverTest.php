@@ -100,9 +100,10 @@ class MetadataRetrieverTest extends TestCase
             ->expects(static::once())
             ->method('getHttpResponse')
             ->with($url, 30, 4194304)
-            ->willReturnCallback(function ($url, $timeout, $maxBytes, $headerCallback, $dlCallback): void {
+            ->willReturnCallback(function ($url, $timeout, $maxBytes, $headerCallback, $dlCallback) use ($remoteCharset): array {
                 $headerCallback();
                 $dlCallback();
+                return [['HTTP/1.1 200 OK'], 'content'];
             })
         ;
 
@@ -148,9 +149,10 @@ class MetadataRetrieverTest extends TestCase
             ->expects(static::once())
             ->method('getHttpResponse')
             ->with($url, 30, 4194304)
-            ->willReturnCallback(function ($url, $timeout, $maxBytes, $headerCallback, $dlCallback): void {
+            ->willReturnCallback(function ($url, $timeout, $maxBytes, $headerCallback, $dlCallback): array {
                 $headerCallback();
                 $dlCallback();
+                return [['HTTP/1.1 200 OK'], 'content'];
             })
         ;
 
@@ -231,9 +233,10 @@ class MetadataRetrieverTest extends TestCase
             ->expects(static::once())
             ->method('getHttpResponse')
             ->with($url, 30, 4194304)
-            ->willReturnCallback(function ($url, $timeout, $maxBytes, $headerCallback, $dlCallback): void {
+            ->willReturnCallback(function ($url, $timeout, $maxBytes, $headerCallback, $dlCallback): array {
                 $headerCallback();
                 $dlCallback();
+                return [['HTTP/1.1 200 OK'], 'content'];
             });
 
         $result = $this->retriever->retrieve($url);
@@ -245,12 +248,173 @@ class MetadataRetrieverTest extends TestCase
         ], $result);
     }
 
-    /**
+     /**
      * Test that unresolvable hosts return empty metadata.
      */
     public function testSsrfInvalidHostRejected(): void
     {
         $result = $this->retriever->retrieve('http://thisdomaindoesnotexist12345.invalid/path');
+        static::assertSame(['title' => null, 'description' => null, 'tags' => null], $result);
+    }
+
+    /**
+     * Test that redirects are followed and metadata is extracted from the final URL.
+     */
+    public function testRedirectIsFollowed(): void
+    {
+        $url = 'https://example.com/redirect';
+        $finalUrl = 'https://example.com/final';
+        $remoteTitle = 'Final Title';
+        $remoteDesc = 'Final description';
+        $remoteTags = 'final tag';
+
+        $this->httpAccess
+            ->expects(static::exactly(2))
+            ->method('getCurlHeaderCallback')
+            ->willReturnCallback(
+                function (): callable {
+                    return function (): void {
+                    };
+                }
+            )
+        ;
+        $this->httpAccess
+            ->expects(static::exactly(2))
+            ->method('getCurlDownloadCallback')
+              ->willReturnCallback(
+                   function (
+                       &$charset,
+                       &$title,
+                       &$description,
+                       &$tags
+                   ) use ($remoteTitle, $remoteDesc, $remoteTags): callable {
+                   return function () use (
+                    &$charset,
+                    &$title,
+                    &$description,
+                    &$tags,
+                    $remoteTitle,
+                    $remoteDesc,
+                    $remoteTags
+                ): void {
+                    $charset = 'utf-8';
+                    $title = $remoteTitle;
+                    $description = $remoteDesc;
+                    $tags = $remoteTags;
+                };
+            }
+        );
+          $redirectCount = 0;
+        $this->httpAccess
+            ->expects(static::exactly(2))
+            ->method('getHttpResponse')
+            ->willReturnCallback(function ($currentUrl, $timeout, $maxBytes, $headerCallback, $dlCallback) use (
+                &$redirectCount,
+                $url,
+                $finalUrl,
+                $remoteTitle,
+                $remoteDesc,
+                $remoteTags
+            ): array {
+                $headerCallback();
+                $dlCallback();
+                if ($redirectCount === 0) {
+                    $redirectCount++;
+                    return [['HTTP/1.1 301 Moved Permanently', 'Location' => $finalUrl], ''];
+                }
+                return [['HTTP/1.1 200 OK'], 'content'];
+            });
+
+        $result = $this->retriever->retrieve($url);
+
+        static::assertSame([
+            'title' => $remoteTitle,
+            'description' => $remoteDesc,
+            'tags' => $remoteTags,
+        ], $result);
+    }
+
+    /**
+     * Test that redirects to private IPs are blocked (SSRF protection).
+     */
+    public function testRedirectToPrivateIpBlocked(): void
+    {
+        $url = 'https://example.com/redirect-to-internal';
+        $internalUrl = 'http://192.168.1.1/admin';
+
+        $this->httpAccess
+            ->expects(static::once())
+            ->method('getCurlHeaderCallback')
+            ->willReturnCallback(
+                function (): callable {
+                    return function (): void {
+                    };
+                }
+            )
+        ;
+        $this->httpAccess
+            ->expects(static::once())
+            ->method('getCurlDownloadCallback')
+            ->willReturnCallback(
+                function (): callable {
+                    return function (): void {
+                    };
+                }
+            )
+        ;
+          $this->httpAccess
+            ->expects(static::once())
+            ->method('getHttpResponse')
+            ->willReturnCallback(function ($url, $timeout, $maxBytes, $headerCallback, $dlCallback) use ($internalUrl): array {
+                $headerCallback();
+                $dlCallback();
+                return [['HTTP/1.1 301 Moved Permanently', 'Location' => $internalUrl], ''];
+            });
+
+        $result = $this->retriever->retrieve($url);
+
+        static::assertSame(['title' => null, 'description' => null, 'tags' => null], $result);
+    }
+
+    /**
+     * Test that redirects to localhost are blocked (SSRF protection).
+     */
+    public function testRedirectToLocalhostBlocked(): void
+    {
+        $url = 'https://example.com/redirect-to-localhost';
+        $localhostUrl = 'http://localhost/metadata';
+
+        $this->httpAccess
+            ->expects(static::once())
+            ->method('getCurlHeaderCallback')
+            ->willReturnCallback(
+                function (): callable {
+                    return function (): void {
+                    };
+                }
+            )
+        ;
+        $this->httpAccess
+            ->expects(static::once())
+            ->method('getCurlDownloadCallback')
+            ->willReturnCallback(
+                function (): callable {
+                    return function (): void {
+                    };
+                }
+            )
+        ;
+        $this->httpAccess
+            ->expects(static::once())
+            ->method('getHttpResponse')
+            ->willReturnCallback(function ($url, $timeout, $maxBytes, $headerCallback, $dlCallback) use ($localhostUrl): array {
+                $headerCallback();
+                $dlCallback();
+                return [['HTTP/1.1 301 Moved Permanently', 'Location' => $localhostUrl], ''];
+            });
+
+        $result = $this->retriever->retrieve($url);
+
         static::assertSame(['title' => null, 'description' => null, 'tags' => null], $result);
     }
 }
